@@ -1,6 +1,7 @@
 # Wine-Quality-Data-Analysis
 
-Wine quality analysis using Machine Learning models in R
+Wine quality analysis using Machine Learning models in R.
+
 Datasets: https://archive.ics.uci.edu/ml/datasets/Wine+Quality.
 
 Let's find the best wine for your next date!
