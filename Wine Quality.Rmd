@@ -361,11 +361,10 @@ paste("beta values")
 t(t(lm.beta(m5)))
 
 ```
-Additionally, we can predict the influence of these variables on the wine quality.  for example,  The alcohol has highest impact on quality of wine such as 1 standard deviation change in the value of alcohol brings 0.477 standard deviation of change in wine quality.
+Apart from this, we can futher investigate the impact of the variables on Wine Quality.
+Intuitively, the alcohol has the highest impact on the quality of wine
 
-# References:
-[1] Field, A., Miles, J., and Field, Z. (2012). Discovering Statistics using R. Sage Publications.  
-[2] https://www.mathworks.com/help/signal/ug/residual-analysis-with-autocorrelation.html
+# This sums up the analysis for given dataset.
+# Further work can be done by finding out the quality and type of grape that was used to make wine and the storing conditions as well.
 
-* Discussed the flow of analysis with peers in study group.
-* Discussed regarding the what to do when assumptions of the test fails with professor.
+# A good reference book to understand statistics in-depth from basic using R can be found here - https://www.amazon.ca/Discovering-Statistics-Using-Andy-Field/dp/1446200469/ref=sr_1_1?gclid=CjwKCAjw8ZHsBRA6EiwA7hw_saOIYjWaxz0qOkQ9rnIYWfdZKlZgnomX3P3ZyxvY-ZJyJXVMY0GsuBoC5K8QAvD_BwE&hvadid=208318866958&hvdev=c&hvlocphy=9001027&hvnetw=g&hvpos=1t1&hvqmt=e&hvrand=18277962018890616395&hvtargid=aud-749198100220%3Akwd-364808766957&hydadcr=22486_9261677&keywords=discovering+statistics+using+r&qid=1569021131&s=gateway&sr=8-1
