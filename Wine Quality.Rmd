@@ -1,0 +1,371 @@
+---
+title: "Wine Quality Analysis"
+author: "Gunjan Shah"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+# Analysis of Wine datasets to figure out the features that affects the wine quality, color, etc.
+# find the dataset here - https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("ggplot2")
+library("psych")
+library("car")
+library("QuantPsyc")
+library("corrplot")
+library("memisc")
+library("pastecs")
+
+```
+
+# Step 1:Initial Analysis - Let's see what we are dealing with!
+
+## We have red and white wine Datasets and we will merge it together 
+
+```{r}
+red <- read.csv("winequality-red.csv",sep = ";",header = TRUE)
+dim(red)
+str(red)
+red$color <- 0
+#Assigning 0 to red
+
+white <- read.csv("winequality-white.csv",sep = ";",header = TRUE)
+dim(white)
+str(white)
+white$color <-1
+#Assigning 1 to white
+
+wine <- rbind(red,white)
+wine$color <- factor(wine$color)
+dim(wine)
+str(wine)
+```
+Each dataset has 12 features such as quality of wine, alcohol level,sugar and so on. 
+All the features have continues values except the quality of wine which is discrete variable bounded in the range 3 to 9(more the better). The red wine dataset has 1599 samples and white wine dataset has 4899 samples.
+
+
+# Analysing the features
+
+Attribute info function helps to analyze the individual feature's properties such as min, max, mean, histogram, Q-Q plot, Box-plot etc and this will help to see if the feature has normal distribution or not.
+```{r}
+attribute_info <- function(cl,bin_size=30)
+{
+print(ggplot(data = wine, aes(x=wine[[cl]])) + geom_histogram(bins=bin_size) + 
+  labs(title = paste("Histogram: ",cl))+xlab(cl))
+
+qqplot <- ggplot(wine, aes(sample=wine[[cl]]))
+print(qqplot +geom_qq() +geom_qq_line() + labs(title = paste("Q-Q Plot: ",cl)))
+print(ggplot(data = wine, aes(y=wine[[cl]])) + geom_boxplot() + 
+  labs(title = paste("Box Plot: ",cl))+ylab(cl))
+
+print(describe(wine[[cl]]))
+m <- mean(wine[[cl]])
+s <- sd(wine[[cl]])
+z_score <- (wine[[cl]] - m) / s
+
+print(paste0("Percent of values outside 2% standard deviation: ",
+      round(length(z_score[abs(z_score) > 2])/length(z_score)*100,4)))
+
+}
+```
+
+# 1.1.fixed.acidity
+```{r}
+attribute_info("fixed.acidity",17)
+```
+fixed acidity is in the range of 3.8 to 15.9. The Q-Q plot show that the line sags consistently consistently rises above it, then this shows that the kurtosis differs from a normal distribution.
+
+The fixed acidity has 4.99% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+
+# 1.2 volatile.acidity
+```{r}
+attribute_info("volatile.acidity",27)
+```
+The volatile acidity is in the range of 0.08 to 1.59. The Q-Q plot show that the data doesn't follow the diagonal line. Hence, it differs from a normal distribution.
+
+Volatile acidity has 5.30% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+# 1.3 citric.acid
+```{r}
+attribute_info("citric.acid")
+cl <- "citric.acid"
+print(describe(wine[[cl]]))
+m <- mean(wine[[cl]])
+s <- sd(wine[[cl]])
+z_score <- (wine[[cl]] - m) / s
+
+print(paste0("Percent of values outside 3% standard deviation: ",
+      round(length(z_score[abs(z_score) > 3])/length(z_score)*100)))
+```
+The citric acid is in the range of 0 to 1.66. The Q-Q plot show that the data is not normal.
+
+The citric acidity has 7.29% values outside 2 standard deviation and 0% values outside 3 standard deviation. By looking at the histogram it is evident that majority of citric acid's value are clustered in small range. All the values are valid values and hence, we accept all the data.
+
+# 1.4 residual.sugar
+```{r}
+attribute_info("residual.sugar",20)
+wine$residual.sugar[wine$residual.sugar>=40]
+wine <- wine[!(wine$residual.sugar>=40),]
+```
+residual sugar seems to vary between 0.6 to 65.8. The Q-Q plot show that the line sags consistently consistently rises above it, this shows that the kurtosis differs from a normal distribution.
+
+The residual sugar has 5.18% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation).  However, with mean of 5.44 and standard deviation of 4.76 one point has maximum value of sugar at 65.8. we removed that point.
+
+# 1.5 chlorides
+```{r}
+attribute_info("chlorides",25)
+```
+The chlorides is in the range of 0.01 to 0.61 The Q-Q plot show that the data doesn't follow the diagonal line. Hence, it differs from a normal distribution.
+
+Chlorides has 2.4784% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+
+# 1.6 free.sulfur.dioxide
+```{r}
+attribute_info("free.sulfur.dioxide",23)
+wine$free.sulfur.dioxide[wine$free.sulfur.dioxide>=150]
+wine <- wine[!(wine$free.sulfur.dioxide>=150),]
+```
+The free sulfur dioxide seems to very between the 1-100 count with peaking around 50 mark. From the Q-Q plot and histogram it looks like normal-distribution.However, one point was around 300. hence, removed that point.
+
+free.sulfur.dioxide has 2.8479% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+
+# 1.7 total.sulfur.dioxide
+```{r}
+attribute_info("total.sulfur.dioxide",50)
+```
+The total sulfur dioxide seems to very between 0 and 300 and exhibiting peak around 150.Moreover, There seems to be another lower peak around the 50 mark. From the Q-Q plot it is evident that it follows the normal distribution.
+
+total.sulfur.dioxide has 1.60% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+
+# 1.8 density
+```{r}
+attribute_info("density",100)
+```
+The density seems to very between the 0.99-1.04 range. From the Q-Q plot and histogram it looks like normal-distribution.
+
+density has 1.80% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+
+# 1.9 pH
+```{r}
+attribute_info("pH")
+```
+* The pH seems to display a normal distribution with major samples exhibiting values between 3.0 and 3.5.
+
+pH has 4.5266% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+
+# 1.10 sulphates
+```{r}
+attribute_info("sulphates",50)
+```
+The sulphates seems to very between the 0.22 to 2. From the Q-Q plot and histogram it looks like sulphates doesn't follow the normal-distribution.
+
+sulphates has 3.7567% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+
+# 1.11 alcohol 
+```{r}
+attribute_info("alcohol")
+```
+The alcohol seems to vary from 8 to 14 with major peaks around 10 with a lower count between 13 and 14 and has no outliers. But doesn't follow the normal distribution as it is seen from the Q-Q plot and histogram.
+
+alcohol has 3.3718% values outside 2 standard deviation which is acceptable (we expect 4.6% of values to be outside 2 standard deviation). Hence, the data don't have any outliers.
+
+# 1.12 quality
+```{r}
+ggplot(data = wine, aes(x=quality)) + geom_bar() + labs(title = "Bar Plot: quality")
+ggplot(data = wine, aes(y=quality)) + geom_boxplot() + labs(title = "Box Plot: quality")
+
+ggplot(data = white, aes(x=quality)) + geom_histogram() + 
+  ggtitle('Quality distribution for White wine')
+ggplot(data = red, aes(x=quality)) + geom_histogram() + 
+  ggtitle('Quality distribution for Red wine')
+
+```
+The first thing to notice is that there are few really bad wines, i.e. those whose quality is below 4. In the same way, there are few really good wines, ie, those whose quality is above 8. It's also effort to notice this distribution seems like a normal one.
+
+The spread for the quality for both Red and White seems to exhibit similar normal distribution except for the fact that White wine distribution exhibit a peak quality around quality rating of 6 while Red wine exhibit a peak quality rating of approx 5.
+
+# 1.13 color
+```{r}
+ggplot(data = wine, aes(x=color)) + geom_bar() + labs(title = "Bar Plot: color")
+
+```
+* The white wine has 3 times more samples than red wine.
+
+# First Analysis 
+# Step 1: Plan
+
+I would like to analyse whether red or white wine hold higher quality. Basically, i want to compare means of the wine quality grouped by color.
+
+Assumption check for independent t-test:
+1) The sampling distribution is normally distributed.  
+-> The Quality of wine is normally distributed as we have seen in feature analyse.  
+2) Data are measured at least at the interval level  
+-> Wine Quality is ordinal categorical variable in the range 1-10. However, for the purpose of analysis we can assume that the Quality of wine is an continues interval variable.   
+3) Scores in different treatment conditions are independent  
+-> We assume that Different scores of wine quality are independent  
+4) Homogeneity of variance.  
+
+-> We check the homogeneity of variance using levene's test. 
+```{r}
+leveneTest(wine$quality,wine$color, center = median)
+```
+The result F(1,6493) = 2.39, p>0.05 is non-significant for the wine quality (the value in the Pr (>F) column is more than .05). This indicates that the variances are similar between groups and the homogeneity of variance assumption is tenable.
+
+# Step 2: Test
+```{r}
+# Wine Quality boxplot
+colorBoxplot <- ggplot(wine, aes(group=color, y=quality, x=color))
+colorBoxplot + geom_boxplot() + geom_jitter(width=0.1, height=0.5, aes(color="red")) +
+  labs(title = "Wine Quality boxplot grouped by color")
+wine$color<-factor(wine$color,labels = c("red","white"))
+
+# Independent T-test
+ind.t.test <- t.test(quality~color,data=wine,paired = F)
+ind.t.test
+
+#Calculating Effect size
+t <- ind.t.test$statistic[[1]]
+df <- ind.t.test$parameter[[1]]
+r <- sqrt(t^2/(t^2+df))
+print(paste0("Effect Size: ",round(r,3)))
+
+```
+# Step 3: Conclude
+As we can see from the independent t-test, On average, The quality of white wine is(M=5.878, SE=0.025) greater than quality of red wine (M=5.636, SE=0.022). The difference is significant (t(2948.8) = -10.275, p < 0.001). Moreover, it represented a small sized effect (r=.18)
+
+From the above mentioned results, we conclude that Quality of white wine is slightly greater than red wine. 
+
+# 2nd Analyses
+
+# Step 1: Plan
+
+We would like to analyse the influence of the various variables such as alcohol, sugar, sulphates etc. have on wine quality.
+
+Outcome variable: Quality  
+Predictor Variables: Other variables except quality. We need to check for assumption like multicolinearity between predictors before finally using the variable as the predictor variable.
+
+# 2. Try multiple scatter plots with respect to alcohol.
+```{r fig.height = 4}
+ggplot(data = wine,aes(x=alcohol,y=quality,color=color)) +geom_jitter()
+ggplot(data = wine,aes(x=pH,y=quality,color=color)) +geom_jitter()
+ggplot(data = wine,aes(x=volatile.acidity,y=quality,color=color)) +geom_jitter()
+ggplot(data = wine,aes(x=residual.sugar,y=quality,color=color)) +geom_jitter()
+ggplot(data = wine,aes(x=sulphates,y=quality,color=color)) +geom_jitter()
+ggplot(data = wine,aes(x=free.sulfur.dioxide,y=quality,color=color)) +geom_jitter()
+ggplot(data = wine,aes(x=density,y=quality,color=color)) +geom_jitter()
+ggplot(data = wine,aes(x=chlorides,y=quality,color=color)) +geom_jitter()
+```
+* From the above plots, it looks like none of the features have clearly visible linear relationship with wine quality.
+
+* Here, most of the feature's have significant kurtosis and some variables are categorical. Hence, I've used Kendall's correlation coefficient for all the pairs of the features.
+```{r}
+wine$color<-factor(wine$color,labels = c(0,1))
+wine$color <- as.numeric(levels(wine$color))[wine$color]
+corrplot(cor(wine,method = "kendall"))
+cor(wine,method ="kendall")
+```
+* The features such as alcohol and density, free sulfur dioxide and total sulfur dioxide are strongly correlated.
+
+* The color of the wine is also strongly correlated with volatile acidity chlorides and total sulfur dioxide. 
+
+* We have used this correlation matrix while choosing the predictor variables that can have influence on wine quality.
+
+# Linear Regression  
+
+Assumptions for Linear model:  
+
+We will need to test residuals for linearity and normality, etc. once we construct the model.  
+1) Predictor variables is either continues or categorical and We are assuming that quality is continues and unbounded.  
+2) Predictor variables is not highly correlated with any other variable in the dataset. However, we are assuming that it is also uncorrelated with any other external variable that is not in the dataset.
+
+Assumptions needed to test after linear model is created:  
+3) Multicolinearity between the predictor variables  
+4) independence of residuals  
+5) normality of residuals
+
+* Let's try to predict the wine quality.
+```{r}
+
+m1 <- lm(quality ~ alcohol, data = wine)
+m2 <- update(m1, ~ . + volatile.acidity)
+m3 <- update(m2, ~ . + residual.sugar)
+m4 <- update(m3, ~ . + free.sulfur.dioxide)
+m5 <- update(m4, ~ . + sulphates)
+mtable(m1,m2,m3,m4,m5)
+```
+* I kept adding the variables to the model which shows significant influence to the wine quality at P<.05 and not correlated with the variables already added.
+```{r}
+summary(m5)
+confint(m5)
+lm.beta(m5)
+plot(m5)
+```
+* Interpret the summary of the model: **All the predictor variables (mentioned below) have an influence on the wine quality at 5% level of significance: alcohol (t(6489)=41.711, p < 2e-16), volatile.acidity (t(6489)=-20.655, p < 2e-16), residual.sugar (t(6489)= 7.140, p < 1.04e-12), free.sulfur.dioxide (t(6489)=4.263, p < 2.04e-05),and sulphates (t(6489)=11.038, p < 2e-16). The intercept is significantly different from 0 (t(6489) = 18.622, p=2e-16).
+
+* Multiple R-squared value is 0.281 and Adjusted R- squared value is .2803. Which shows our model does well to generalize on the population. Moreover, it also exhibits that our model explains the 28.08% variance in the Wine Quality feature. 
+
+* F is 506.8, which is significant at p < .001. This result tells us that there is less than a 0.1% chance that an F-ratio this large would happen if the null hypothesis (Null Hypothesis: the coefficients associated with the variables is equal to zero) were true. Moreover, The confidence Interval's of the variables coefficient doesn't cross zero which shows that null hypothesis is false.
+
+* Therefore, we can conclude that our regression model results in significantly better prediction of Wine Quality than if we used the mean value of wine quality. In short, the regression model overall predicts Wine Quality significantly well.
+
+* However, The predictor variables accounts for only 28% of variance in the wine quality. It means that there there is still 72% of variance unexplained.
+
+* The residuals are also normally distributed as it is evident from the Q-Q plot of the residuals.
+
+* The features such as alcohol,volatile.acidity,sulphates,residual.sugar and free.sulfur.dioxide impact the wine quality. The alcohol has highest impact on quality of wine such as 1 standard deviation change in the value of alcohol brings 0.477 standard deviation of change in wine quality.
+
+```{r}
+wine$fitted <- m5$fitted
+wine$residuals <- m5$residuals
+wine$standardized.residuals <- rstandard(m5)
+wine$cooks <- cooks.distance(m5)
+plot(sort(wine$cooks, decreasing=TRUE))
+
+max(wine$cooks)
+
+durbinWatsonTest(m5)
+```
+To find out the influential cases, we calculated the cook's distance on the model. Maximum Cook's distance was around 0.0298, which is way below of threshold value of 1. Thus, we conclude that there are no influential cases in the data frame.
+
+The Durbin-Watson test for independent errors was significant at the 5% level of significance (d=1.64,p=0.0).Even though d=1.64 which doesn't impliy autocorelation, p value is 0. so we reject the null hypothesis that the errors are independent, and Thus, we conclude that errors are Dependent. The implication is that the model has not accounted for all the signal and therefore the residuals consist of signal plus noise.[2]
+
+# Outliers:
+```{r}
+possible.outliers <- subset(wine, standardized.residuals < -2 | standardized.residuals > 2)
+dim(possible.outliers)[1]/dim(wine)[1]*100
+```
+From the above calculations, we found around 5.296% of sample data points(344 residuals) are above or below the 2% standard deviation. We do expect 4.56% of data to be outside of 2 standard deviation range. Hence, we do not remove any data points from the data frame.
+
+# Multicolinearity
+```{r}
+vif(m5)
+mean(vif(m5))
+1/vif(m5)
+
+```
+The largest VIF was 1.352679, less than 10; the average vif was 1.244771. The lowest tolerance (1/VIF) was 0.7171810, much greater than .1 (which would indicate a serious problem) and .2 (which indicates a potential problem). Thus, we conclude that there is no collinearity in our data.  
+
+What follow up do you have (e.g., changes to the model, followup questions)? **From the developed model, it is evident that alcohol levels, residual sugar, volatile acidity, free.sulfur.dioxide and sulphates explains 28% of variance in quality of wine. The predictor variables impact the wine quality. However, there is still 72% of variance left unexplained. Hence, Possible followup includes collecting more features for the data to explain more varinace. **
+
+## Step 4: Conclusion
+
+We built a **linear model to assess the impact of alcohol levels, residual sugar, volatile acidity, free.sulfur.dioxide and sulphates on the wine quality All the mentioned features explains 28% of variance in quality of wine. The Residuals of the model are not independent. It means that residuals are auto correlated. Thus, Assumptions of linear model were not met as residuals contained the signals in addition to noise. However, it still explains 28% of signals in the quality.**  
+
+Produce a table of the model parameters (Beta 0, 1, ...):
+```{r}
+summary(m5)$coefficients
+paste("beta values")
+t(t(lm.beta(m5)))
+
+```
+Additionally, we can predict the influence of these variables on the wine quality.  for example,  The alcohol has highest impact on quality of wine such as 1 standard deviation change in the value of alcohol brings 0.477 standard deviation of change in wine quality.
+
+# References:
+[1] Field, A., Miles, J., and Field, Z. (2012). Discovering Statistics using R. Sage Publications.  
+[2] https://www.mathworks.com/help/signal/ug/residual-analysis-with-autocorrelation.html
+
+* Discussed the flow of analysis with peers in study group.
+* Discussed regarding the what to do when assumptions of the test fails with professor.
