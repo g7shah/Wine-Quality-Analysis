@@ -1,7 +1,7 @@
 # Wine-Quality-Data-Analysis
 
-Analysied the Wine Quality Dataset from https://archive.ics.uci.edu/ml/datasets/Wine+Quality.
+Wine quality analysis using Machine Learning models in R
+Datasets: https://archive.ics.uci.edu/ml/datasets/Wine+Quality.
 
-Tested the below mentioned hypothesis:  
-a) whether red or white wine hold higher quality,  
-b) what factors impact wine quality
+Let's find the best wine for your next date!
+Red or White? How to decide and what components of wine affects the wine color and taste? Let's find out!
